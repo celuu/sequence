@@ -1,23 +1,30 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Flex, Heading } from "@chakra-ui/react";
+import { Button, Flex, HStack, Heading } from "@chakra-ui/react";
 import { useWorkouts } from "../features/workouts/hooks";
 import { WorkoutTable } from "../features/workouts/WorkoutTable";
 import { CreateWorkoutModal } from "../features/workouts/CreateWorkoutModal";
+import { ImportWorkoutModal } from "../features/workout-import/ImportWorkoutModal";
 import { LoadingState } from "../components/ui/LoadingState";
 
 export default function WorkoutsPage() {
   const { data: workouts = [], isLoading } = useWorkouts();
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const navigate = useNavigate();
 
   return (
     <>
       <Flex align="center" justify="space-between" mb={6}>
         <Heading size="md">Workouts</Heading>
-        <Button colorPalette="brand" onClick={() => setFormOpen(true)}>
-          New workout
-        </Button>
+        <HStack>
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            Import from text
+          </Button>
+          <Button colorPalette="brand" onClick={() => setFormOpen(true)}>
+            New workout
+          </Button>
+        </HStack>
       </Flex>
 
       {isLoading ? <LoadingState /> : <WorkoutTable workouts={workouts} />}
@@ -26,6 +33,12 @@ export default function WorkoutsPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         onCreated={(workout) => navigate(`/workouts/${workout.id}`)}
+      />
+
+      <ImportWorkoutModal
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImported={(workoutId) => navigate(`/workouts/${workoutId}`)}
       />
     </>
   );
