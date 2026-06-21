@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Menu, Portal, Table, Text } from "@chakra-ui/react";
+import { Box, Menu, Portal, Stack, Table, Text } from "@chakra-ui/react";
 import type { Workout } from "../../types/domain";
 import { ConfirmDeleteDialog } from "../../components/ui/ConfirmDeleteDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
@@ -43,9 +43,78 @@ export function WorkoutTable({ workouts }: WorkoutTableProps) {
     );
   }
 
+  const renderMenu = (workout: Workout) => (
+    <Menu.Root>
+      <Menu.Trigger asChild>
+        <Text as="button" cursor="pointer" px={2}>
+          ⋯
+        </Text>
+      </Menu.Trigger>
+      <Portal>
+        <Menu.Positioner>
+          <Menu.Content>
+            <Menu.Item
+              value="open"
+              onClick={() => navigate(`/workouts/${workout.id}`)}
+            >
+              Open
+            </Menu.Item>
+            <Menu.Item
+              value="duplicate"
+              onClick={() => handleDuplicate(workout.id)}
+            >
+              Duplicate
+            </Menu.Item>
+            <Menu.Item
+              value="delete"
+              color="red.600"
+              onClick={() => setDeleteTarget(workout)}
+            >
+              Delete
+            </Menu.Item>
+          </Menu.Content>
+        </Menu.Positioner>
+      </Portal>
+    </Menu.Root>
+  );
+
   return (
     <>
-      <Table.Root size="sm" interactive>
+      <Stack gap={3} display={{ base: "flex", md: "none" }}>
+        {workouts.map((workout) => (
+          <Box
+            key={workout.id}
+            borderWidth="1px"
+            borderRadius="md"
+            p={4}
+            cursor="pointer"
+            onClick={() => navigate(`/workouts/${workout.id}`)}
+          >
+            <Stack direction="row" justify="space-between" align="flex-start">
+              <Stack gap={1}>
+                <Text fontWeight={600}>{workout.name}</Text>
+                {workout.description && (
+                  <Text fontSize="sm" color="gray.600">
+                    {workout.description}
+                  </Text>
+                )}
+                <Text fontSize="sm" color="gray.600">
+                  {workout.totalDurationSeconds
+                    ? `${Math.round(workout.totalDurationSeconds / 60)} min`
+                    : "—"}
+                  {" · "}
+                  {formatUpdatedAt(workout.updatedAt)}
+                </Text>
+              </Stack>
+              <Box onClick={(e) => e.stopPropagation()}>
+                {renderMenu(workout)}
+              </Box>
+            </Stack>
+          </Box>
+        ))}
+      </Stack>
+
+      <Table.Root size="sm" interactive display={{ base: "none", md: "table" }}>
         <Table.Header>
           <Table.Row>
             <Table.ColumnHeader>Name</Table.ColumnHeader>
@@ -71,38 +140,7 @@ export function WorkoutTable({ workouts }: WorkoutTableProps) {
               </Table.Cell>
               <Table.Cell>{formatUpdatedAt(workout.updatedAt)}</Table.Cell>
               <Table.Cell textAlign="end" onClick={(e) => e.stopPropagation()}>
-                <Menu.Root>
-                  <Menu.Trigger asChild>
-                    <Text as="button" cursor="pointer" px={2}>
-                      ⋯
-                    </Text>
-                  </Menu.Trigger>
-                  <Portal>
-                    <Menu.Positioner>
-                      <Menu.Content>
-                        <Menu.Item
-                          value="open"
-                          onClick={() => navigate(`/workouts/${workout.id}`)}
-                        >
-                          Open
-                        </Menu.Item>
-                        <Menu.Item
-                          value="duplicate"
-                          onClick={() => handleDuplicate(workout.id)}
-                        >
-                          Duplicate
-                        </Menu.Item>
-                        <Menu.Item
-                          value="delete"
-                          color="red.600"
-                          onClick={() => setDeleteTarget(workout)}
-                        >
-                          Delete
-                        </Menu.Item>
-                      </Menu.Content>
-                    </Menu.Positioner>
-                  </Portal>
-                </Menu.Root>
+                {renderMenu(workout)}
               </Table.Cell>
             </Table.Row>
           ))}

@@ -72,7 +72,7 @@ export function CreateWorkoutModal({
             <Dialog.Header>
               <Dialog.Title>New workout</Dialog.Title>
             </Dialog.Header>
-            <Dialog.Body>
+            <Dialog.Body maxH={{ base: "70vh", md: "auto" }} overflowY="auto">
               <Stack
                 as="form"
                 id="create-workout-form"

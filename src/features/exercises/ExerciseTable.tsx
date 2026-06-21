@@ -2,8 +2,10 @@ import { useState } from "react";
 import {
   Alert,
   Badge,
+  Box,
   Menu,
   Portal,
+  Stack,
   Table,
   Text,
 } from "@chakra-ui/react";
@@ -53,6 +55,35 @@ export function ExerciseTable({ exercises, onEdit }: ExerciseTableProps) {
     );
   }
 
+  const renderMenu = (exercise: Exercise) => (
+    <Menu.Root>
+      <Menu.Trigger asChild>
+        <Text as="button" cursor="pointer" px={2}>
+          ⋯
+        </Text>
+      </Menu.Trigger>
+      <Portal>
+        <Menu.Positioner>
+          <Menu.Content>
+            <Menu.Item value="edit" onClick={() => onEdit(exercise)}>
+              Edit
+            </Menu.Item>
+            <Menu.Item
+              value="delete"
+              color="red.600"
+              onClick={() => {
+                setDeleteError(null);
+                setDeleteTarget(exercise);
+              }}
+            >
+              Delete
+            </Menu.Item>
+          </Menu.Content>
+        </Menu.Positioner>
+      </Portal>
+    </Menu.Root>
+  );
+
   return (
     <>
       {deleteError && (
@@ -61,7 +92,39 @@ export function ExerciseTable({ exercises, onEdit }: ExerciseTableProps) {
           <Alert.Title>{deleteError}</Alert.Title>
         </Alert.Root>
       )}
-      <Table.Root size="sm" interactive>
+
+      <Stack gap={3} display={{ base: "flex", md: "none" }}>
+        {exercises.map((exercise) => (
+          <Box key={exercise.id} borderWidth="1px" borderRadius="md" p={4}>
+            <Stack direction="row" justify="space-between" align="flex-start">
+              <Stack gap={1}>
+                <Text fontWeight={600}>{exercise.name}</Text>
+                <Text fontSize="sm" color="gray.600">
+                  {exercise.category ?? "—"}
+                  {exercise.muscleGroups?.length
+                    ? ` · ${exercise.muscleGroups.join(", ")}`
+                    : ""}
+                </Text>
+                <Stack direction="row" gap={2} align="center">
+                  {exercise.difficulty && (
+                    <Badge colorPalette={difficultyColor[exercise.difficulty]}>
+                      {exercise.difficulty}
+                    </Badge>
+                  )}
+                  {exercise.defaultDurationSeconds && (
+                    <Text fontSize="sm" color="gray.600">
+                      {exercise.defaultDurationSeconds}s
+                    </Text>
+                  )}
+                </Stack>
+              </Stack>
+              {renderMenu(exercise)}
+            </Stack>
+          </Box>
+        ))}
+      </Stack>
+
+      <Table.Root size="sm" interactive display={{ base: "none", md: "table" }}>
         <Table.Header>
           <Table.Row>
             <Table.ColumnHeader>Name</Table.ColumnHeader>
@@ -96,37 +159,7 @@ export function ExerciseTable({ exercises, onEdit }: ExerciseTableProps) {
                   ? `${exercise.defaultDurationSeconds}s`
                   : "—"}
               </Table.Cell>
-              <Table.Cell textAlign="end">
-                <Menu.Root>
-                  <Menu.Trigger asChild>
-                    <Text as="button" cursor="pointer" px={2}>
-                      ⋯
-                    </Text>
-                  </Menu.Trigger>
-                  <Portal>
-                    <Menu.Positioner>
-                      <Menu.Content>
-                        <Menu.Item
-                          value="edit"
-                          onClick={() => onEdit(exercise)}
-                        >
-                          Edit
-                        </Menu.Item>
-                        <Menu.Item
-                          value="delete"
-                          color="red.600"
-                          onClick={() => {
-                            setDeleteError(null);
-                            setDeleteTarget(exercise);
-                          }}
-                        >
-                          Delete
-                        </Menu.Item>
-                      </Menu.Content>
-                    </Menu.Positioner>
-                  </Portal>
-                </Menu.Root>
-              </Table.Cell>
+              <Table.Cell textAlign="end">{renderMenu(exercise)}</Table.Cell>
             </Table.Row>
           ))}
         </Table.Body>

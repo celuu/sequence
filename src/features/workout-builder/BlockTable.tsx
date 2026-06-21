@@ -14,10 +14,11 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Table } from "@chakra-ui/react";
+import { Box, Stack, Table } from "@chakra-ui/react";
 import type { WorkoutBlock } from "../../types/domain";
 import { ConfirmDeleteDialog } from "../../components/ui/ConfirmDeleteDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { BlockCard } from "./BlockCard";
 import { BlockRow } from "./BlockRow";
 import { useDeleteBlock, useReorderBlocks } from "./hooks";
 
@@ -75,44 +76,61 @@ export function BlockTable({
 
   return (
     <>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={blocks.map((b) => b.id)}
-          strategy={verticalListSortingStrategy}
+      <Stack gap={3} display={{ base: "flex", md: "none" }}>
+        {blocks.map((block, index) => (
+          <BlockCard
+            key={block.id}
+            block={block}
+            onEdit={() => onEditBlock(block)}
+            onDelete={() => setDeleteTarget(block)}
+            onMoveUp={() => moveBlock(index, index - 1)}
+            onMoveDown={() => moveBlock(index, index + 1)}
+            isFirst={index === 0}
+            isLast={index === blocks.length - 1}
+          />
+        ))}
+      </Stack>
+
+      <Box display={{ base: "none", md: "block" }}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
         >
-          <Table.Root size="sm">
-            <Table.Header>
-              <Table.Row>
-                <Table.ColumnHeader>Order</Table.ColumnHeader>
-                <Table.ColumnHeader>Exercise</Table.ColumnHeader>
-                <Table.ColumnHeader>Side</Table.ColumnHeader>
-                <Table.ColumnHeader>Duration</Table.ColumnHeader>
-                <Table.ColumnHeader>Springs</Table.ColumnHeader>
-                <Table.ColumnHeader>Notes</Table.ColumnHeader>
-                <Table.ColumnHeader />
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {blocks.map((block, index) => (
-                <BlockRow
-                  key={block.id}
-                  block={block}
-                  onEdit={() => onEditBlock(block)}
-                  onDelete={() => setDeleteTarget(block)}
-                  onMoveUp={() => moveBlock(index, index - 1)}
-                  onMoveDown={() => moveBlock(index, index + 1)}
-                  isFirst={index === 0}
-                  isLast={index === blocks.length - 1}
-                />
-              ))}
-            </Table.Body>
-          </Table.Root>
-        </SortableContext>
-      </DndContext>
+          <SortableContext
+            items={blocks.map((b) => b.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <Table.Root size="sm">
+              <Table.Header>
+                <Table.Row>
+                  <Table.ColumnHeader>Order</Table.ColumnHeader>
+                  <Table.ColumnHeader>Exercise</Table.ColumnHeader>
+                  <Table.ColumnHeader>Side</Table.ColumnHeader>
+                  <Table.ColumnHeader>Duration</Table.ColumnHeader>
+                  <Table.ColumnHeader>Springs</Table.ColumnHeader>
+                  <Table.ColumnHeader>Notes</Table.ColumnHeader>
+                  <Table.ColumnHeader />
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {blocks.map((block, index) => (
+                  <BlockRow
+                    key={block.id}
+                    block={block}
+                    onEdit={() => onEditBlock(block)}
+                    onDelete={() => setDeleteTarget(block)}
+                    onMoveUp={() => moveBlock(index, index - 1)}
+                    onMoveDown={() => moveBlock(index, index + 1)}
+                    isFirst={index === 0}
+                    isLast={index === blocks.length - 1}
+                  />
+                ))}
+              </Table.Body>
+            </Table.Root>
+          </SortableContext>
+        </DndContext>
+      </Box>
 
       <ConfirmDeleteDialog
         open={!!deleteTarget}

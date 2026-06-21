@@ -15,13 +15,27 @@ export default function WorkoutsPage() {
 
   return (
     <>
-      <Flex align="center" justify="space-between" mb={6}>
+      <Flex
+        direction={{ base: "column", md: "row" }}
+        align={{ base: "stretch", md: "center" }}
+        justify="space-between"
+        gap={3}
+        mb={6}
+      >
         <Heading size="md">Workouts</Heading>
-        <HStack>
-          <Button variant="outline" onClick={() => setImportOpen(true)}>
+        <HStack flexWrap="wrap">
+          <Button
+            variant="outline"
+            flex={{ base: 1, md: "initial" }}
+            onClick={() => setImportOpen(true)}
+          >
             Import from text
           </Button>
-          <Button colorPalette="brand" onClick={() => setFormOpen(true)}>
+          <Button
+            colorPalette="brand"
+            flex={{ base: 1, md: "initial" }}
+            onClick={() => setFormOpen(true)}
+          >
             New workout
           </Button>
         </HStack>

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Badge, Editable, HStack, Stack, Text } from "@chakra-ui/react";
+import { Badge, Editable, Flex, HStack, Stack, Text } from "@chakra-ui/react";
 import type { WorkoutDetail } from "../../types/domain";
 import { useUpdateWorkoutMeta } from "./hooks";
 
@@ -32,13 +32,14 @@ export function WorkoutMetaBar({ workout }: WorkoutMetaBarProps) {
 
   return (
     <Stack gap={2} mb={6}>
-      <HStack justify="space-between">
+      <Flex justify="space-between" align="center" gap={2} flexWrap="wrap">
         <Editable.Root
           key={workout.name}
           defaultValue={workout.name}
           onValueCommit={(details) => commitName(details.value)}
           fontSize="xl"
           fontWeight={700}
+          minW={0}
         >
           <Editable.Preview />
           <Editable.Input />
@@ -56,7 +57,7 @@ export function WorkoutMetaBar({ workout }: WorkoutMetaBarProps) {
           )}
           <Badge>{totalMinutes} min total</Badge>
         </HStack>
-      </HStack>
+      </Flex>
       <Editable.Root
         key={workout.description ?? ""}
         defaultValue={workout.description ?? ""}

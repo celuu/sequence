@@ -1,4 +1,4 @@
-import { HStack, Input, NativeSelect } from "@chakra-ui/react";
+import { Input, NativeSelect, Stack } from "@chakra-ui/react";
 
 interface ExerciseFiltersProps {
   search: string;
@@ -20,14 +20,14 @@ export function ExerciseFilters({
   categories,
 }: ExerciseFiltersProps) {
   return (
-    <HStack gap={3} mb={4}>
+    <Stack direction={{ base: "column", md: "row" }} gap={3} mb={4}>
       <Input
         placeholder="Search exercises…"
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
-        maxW="280px"
+        maxW={{ base: "full", md: "280px" }}
       />
-      <NativeSelect.Root maxW="200px">
+      <NativeSelect.Root maxW={{ base: "full", md: "200px" }}>
         <NativeSelect.Field
           value={category}
           onChange={(e) => onCategoryChange(e.target.value)}
@@ -41,7 +41,7 @@ export function ExerciseFilters({
         </NativeSelect.Field>
         <NativeSelect.Indicator />
       </NativeSelect.Root>
-      <NativeSelect.Root maxW="200px">
+      <NativeSelect.Root maxW={{ base: "full", md: "200px" }}>
         <NativeSelect.Field
           value={difficulty}
           onChange={(e) => onDifficultyChange(e.target.value)}
@@ -53,6 +53,6 @@ export function ExerciseFilters({
         </NativeSelect.Field>
         <NativeSelect.Indicator />
       </NativeSelect.Root>
-    </HStack>
+    </Stack>
   );
 }

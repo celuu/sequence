@@ -37,7 +37,13 @@ export default function WorkoutBuilderPage() {
 
       <WorkoutMetaBar workout={workout} />
 
-      <Flex align="center" justify="space-between" mb={4}>
+      <Flex
+        direction={{ base: "column", md: "row" }}
+        align={{ base: "stretch", md: "center" }}
+        justify="space-between"
+        gap={3}
+        mb={4}
+      >
         <Heading size="sm">Exercises</Heading>
         <Button colorPalette="brand" onClick={openAddDrawer}>
           Add exercise

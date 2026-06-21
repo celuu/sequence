@@ -72,7 +72,21 @@ export function ImportReviewStep({
       {readyDrafts.length > 0 && (
         <Stack gap={2}>
           <Text fontWeight="semibold">Ready to import ({readyDrafts.length})</Text>
-          <Box overflowX="auto">
+
+          <Stack gap={3} display={{ base: "flex", md: "none" }}>
+            {readyDrafts.map((draft) => (
+              <DraftCard
+                key={draft.id}
+                draft={draft}
+                bucket="ready"
+                existingExercises={existingExercises}
+                onUpdate={(patch) => updateDraft(draft.id, patch)}
+                onRemove={() => removeDraft(draft.id)}
+              />
+            ))}
+          </Stack>
+
+          <Box overflowX="auto" display={{ base: "none", md: "block" }}>
             <Table.Root size="sm">
               <Table.Header>
                 <Table.Row>
@@ -105,7 +119,21 @@ export function ImportReviewStep({
           <Text fontWeight="semibold">
             Needs your attention ({attentionDrafts.length})
           </Text>
-          <Box overflowX="auto">
+
+          <Stack gap={3} display={{ base: "flex", md: "none" }}>
+            {attentionDrafts.map((draft) => (
+              <DraftCard
+                key={draft.id}
+                draft={draft}
+                bucket="attention"
+                existingExercises={existingExercises}
+                onUpdate={(patch) => updateDraft(draft.id, patch)}
+                onRemove={() => removeDraft(draft.id)}
+              />
+            ))}
+          </Stack>
+
+          <Box overflowX="auto" display={{ base: "none", md: "block" }}>
             <Table.Root size="sm">
               <Table.Header>
                 <Table.Row>
@@ -153,25 +181,106 @@ interface DraftRowProps {
   onRemove: () => void;
 }
 
-function DraftRow({
+function badgeFor(draft: DraftBlock): { label: string; color: string } {
+  if (draft.status === "needs-review") {
+    return { label: draft.reviewReason ?? "Missing duration", color: "orange" };
+  }
+  return { label: "New exercise", color: "blue" };
+}
+
+function MatchExistingSelect({
   draft,
-  bucket,
   existingExercises,
   onUpdate,
-  onRemove,
-}: DraftRowProps) {
-  const badgeLabel =
-    draft.status === "needs-review"
-      ? draft.reviewReason ?? "Missing duration"
-      : "New exercise";
+  size = "sm",
+}: {
+  draft: DraftBlock;
+  existingExercises: Exercise[];
+  onUpdate: (patch: Partial<DraftBlock>) => void;
+  size?: "sm" | "md";
+}) {
+  return (
+    <NativeSelect.Root size={size}>
+      <NativeSelect.Field
+        value={draft.exerciseId ?? ""}
+        onChange={(e) => {
+          const exerciseId = e.target.value || null;
+          const matched = existingExercises.find((ex) => ex.id === exerciseId);
+          onUpdate({
+            exerciseId,
+            exerciseName: matched?.name ?? draft.exerciseName,
+          });
+        }}
+      >
+        <option value="">New exercise</option>
+        {existingExercises.map((exercise) => (
+          <option key={exercise.id} value={exercise.id}>
+            {exercise.name}
+          </option>
+        ))}
+      </NativeSelect.Field>
+      <NativeSelect.Indicator />
+    </NativeSelect.Root>
+  );
+}
+
+function SideSelect({
+  draft,
+  onUpdate,
+  size = "sm",
+}: {
+  draft: DraftBlock;
+  onUpdate: (patch: Partial<DraftBlock>) => void;
+  size?: "sm" | "md";
+}) {
+  return (
+    <NativeSelect.Root size={size}>
+      <NativeSelect.Field
+        value={draft.side}
+        onChange={(e) => onUpdate({ side: e.target.value as DraftBlock["side"] })}
+      >
+        <option value="none">None</option>
+        <option value="left">Left</option>
+        <option value="right">Right</option>
+        <option value="both">Both</option>
+      </NativeSelect.Field>
+      <NativeSelect.Indicator />
+    </NativeSelect.Root>
+  );
+}
+
+function DurationInput({
+  draft,
+  onUpdate,
+  size = "sm",
+}: {
+  draft: DraftBlock;
+  onUpdate: (patch: Partial<DraftBlock>) => void;
+  size?: "sm" | "md";
+}) {
+  return (
+    <NumberInput.Root
+      size={size}
+      min={1}
+      value={draft.durationSeconds != null ? String(draft.durationSeconds) : ""}
+      onValueChange={(details) =>
+        onUpdate({ durationSeconds: details.valueAsNumber || null })
+      }
+    >
+      <NumberInput.Control />
+      <NumberInput.Input />
+    </NumberInput.Root>
+  );
+}
+
+function DraftRow({ draft, bucket, existingExercises, onUpdate, onRemove }: DraftRowProps) {
+  const badge = badgeFor(draft);
 
   return (
     <Table.Row>
       {bucket === "attention" && (
         <Table.Cell>
-          <Badge colorPalette={draft.status === "needs-review" ? "orange" : "blue"}>
-            {badgeLabel}
-          </Badge>
+          <Badge colorPalette={badge.color}>{badge.label}</Badge>
         </Table.Cell>
       )}
       <Table.Cell minW="160px">
@@ -187,29 +296,11 @@ function DraftRow({
       </Table.Cell>
       {bucket === "attention" && (
         <Table.Cell minW="180px">
-          <NativeSelect.Root size="sm">
-            <NativeSelect.Field
-              value={draft.exerciseId ?? ""}
-              onChange={(e) => {
-                const exerciseId = e.target.value || null;
-                const matched = existingExercises.find(
-                  (ex) => ex.id === exerciseId,
-                );
-                onUpdate({
-                  exerciseId,
-                  exerciseName: matched?.name ?? draft.exerciseName,
-                });
-              }}
-            >
-              <option value="">New exercise</option>
-              {existingExercises.map((exercise) => (
-                <option key={exercise.id} value={exercise.id}>
-                  {exercise.name}
-                </option>
-              ))}
-            </NativeSelect.Field>
-            <NativeSelect.Indicator />
-          </NativeSelect.Root>
+          <MatchExistingSelect
+            draft={draft}
+            existingExercises={existingExercises}
+            onUpdate={onUpdate}
+          />
         </Table.Cell>
       )}
       {bucket === "attention" && (
@@ -222,33 +313,10 @@ function DraftRow({
         </Table.Cell>
       )}
       <Table.Cell minW="110px">
-        <NativeSelect.Root size="sm">
-          <NativeSelect.Field
-            value={draft.side}
-            onChange={(e) =>
-              onUpdate({ side: e.target.value as DraftBlock["side"] })
-            }
-          >
-            <option value="none">None</option>
-            <option value="left">Left</option>
-            <option value="right">Right</option>
-            <option value="both">Both</option>
-          </NativeSelect.Field>
-          <NativeSelect.Indicator />
-        </NativeSelect.Root>
+        <SideSelect draft={draft} onUpdate={onUpdate} />
       </Table.Cell>
       <Table.Cell minW="100px">
-        <NumberInput.Root
-          size="sm"
-          min={1}
-          value={draft.durationSeconds != null ? String(draft.durationSeconds) : ""}
-          onValueChange={(details) =>
-            onUpdate({ durationSeconds: details.valueAsNumber || null })
-          }
-        >
-          <NumberInput.Control />
-          <NumberInput.Input />
-        </NumberInput.Root>
+        <DurationInput draft={draft} onUpdate={onUpdate} />
       </Table.Cell>
       <Table.Cell minW="140px">
         <Input
@@ -268,5 +336,84 @@ function DraftRow({
         </IconButton>
       </Table.Cell>
     </Table.Row>
+  );
+}
+
+function DraftCard({ draft, bucket, existingExercises, onUpdate, onRemove }: DraftRowProps) {
+  const badge = badgeFor(draft);
+
+  return (
+    <Box borderWidth="1px" borderRadius="md" p={4}>
+      <Stack gap={3}>
+        <Stack direction="row" justify="space-between" align="flex-start">
+          {bucket === "attention" ? (
+            <Input
+              size="sm"
+              flex={1}
+              value={draft.exerciseName}
+              onChange={(e) => onUpdate({ exerciseName: e.target.value })}
+            />
+          ) : (
+            <Text fontWeight={600}>{draft.exerciseName}</Text>
+          )}
+          <IconButton
+            aria-label="Remove row"
+            size="2xs"
+            variant="ghost"
+            onClick={onRemove}
+          >
+            ✕
+          </IconButton>
+        </Stack>
+
+        {bucket === "attention" && (
+          <Badge colorPalette={badge.color} alignSelf="flex-start">
+            {badge.label}
+          </Badge>
+        )}
+
+        {bucket === "attention" && (
+          <Field.Root>
+            <Field.Label fontSize="xs">Match existing</Field.Label>
+            <MatchExistingSelect
+              draft={draft}
+              existingExercises={existingExercises}
+              onUpdate={onUpdate}
+            />
+          </Field.Root>
+        )}
+
+        {bucket === "attention" && (
+          <Field.Root>
+            <Field.Label fontSize="xs">Category</Field.Label>
+            <Input
+              size="sm"
+              value={draft.category ?? ""}
+              onChange={(e) => onUpdate({ category: e.target.value || null })}
+            />
+          </Field.Root>
+        )}
+
+        <Stack direction="row" gap={3}>
+          <Field.Root flex={1}>
+            <Field.Label fontSize="xs">Side</Field.Label>
+            <SideSelect draft={draft} onUpdate={onUpdate} />
+          </Field.Root>
+          <Field.Root flex={1}>
+            <Field.Label fontSize="xs">Duration (s)</Field.Label>
+            <DurationInput draft={draft} onUpdate={onUpdate} />
+          </Field.Root>
+        </Stack>
+
+        <Field.Root>
+          <Field.Label fontSize="xs">Notes</Field.Label>
+          <Input
+            size="sm"
+            value={draft.notes ?? ""}
+            onChange={(e) => onUpdate({ notes: e.target.value || null })}
+          />
+        </Field.Root>
+      </Stack>
+    </Box>
   );
 }

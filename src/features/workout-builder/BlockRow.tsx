@@ -13,13 +13,7 @@ import {
   Tooltip,
 } from "@chakra-ui/react";
 import type { WorkoutBlock } from "../../types/domain";
-
-const sideLabel: Record<string, string> = {
-  left: "Left",
-  right: "Right",
-  both: "Both",
-  none: "—",
-};
+import { sideLabel } from "./blockLabels";
 
 interface BlockRowProps {
   block: WorkoutBlock;

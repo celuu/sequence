@@ -50,7 +50,13 @@ export default function ExercisesPage() {
 
   return (
     <>
-      <Flex align="center" justify="space-between" mb={6}>
+      <Flex
+        direction={{ base: "column", md: "row" }}
+        align={{ base: "stretch", md: "center" }}
+        justify="space-between"
+        gap={3}
+        mb={6}
+      >
         <Heading size="md">Exercises</Heading>
         <Button colorPalette="brand" onClick={openCreateForm}>
           New exercise

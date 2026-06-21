@@ -123,7 +123,7 @@ export function ExerciseFormModal({
                 {isEditing ? "Edit exercise" : "New exercise"}
               </Dialog.Title>
             </Dialog.Header>
-            <Dialog.Body>
+            <Dialog.Body maxH={{ base: "70vh", md: "auto" }} overflowY="auto">
               <Stack as="form" id="exercise-form" gap={4} onSubmit={handleSubmit(onSubmit)}>
                 <Field.Root invalid={!!errors.name} required>
                   <Field.Label>Name</Field.Label>

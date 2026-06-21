@@ -106,12 +106,12 @@ function ImportWorkoutModalBody({
 
   return (
     <>
-      <Dialog.Header>
+      <Dialog.Header px={{ base: 4, md: 6 }}>
         <Dialog.Title>
           {step === "paste" ? "Import from text" : "Review import"}
         </Dialog.Title>
       </Dialog.Header>
-      <Dialog.Body maxH="65vh" overflowY="auto">
+      <Dialog.Body px={{ base: 4, md: 6 }} maxH="65vh" overflowY="auto">
         {step === "paste" ? (
           <Stack gap={4}>
             <Text fontSize="sm" color="gray.500">
@@ -159,7 +159,7 @@ function ImportWorkoutModalBody({
           </Stack>
         )}
       </Dialog.Body>
-      <Dialog.Footer>
+      <Dialog.Footer px={{ base: 4, md: 6 }} flexWrap="wrap">
         {step === "review" && (
           <Button variant="outline" onClick={() => setStep("paste")}>
             Back

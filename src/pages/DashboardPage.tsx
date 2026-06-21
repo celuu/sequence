@@ -31,7 +31,13 @@ export default function DashboardPage() {
 
   return (
     <>
-      <Flex align="center" justify="space-between" mb={6}>
+      <Flex
+        direction={{ base: "column", md: "row" }}
+        align={{ base: "stretch", md: "center" }}
+        justify="space-between"
+        gap={3}
+        mb={6}
+      >
         <Heading size="md">Dashboard</Heading>
         <Button colorPalette="brand" onClick={() => setFormOpen(true)}>
           Create workout
