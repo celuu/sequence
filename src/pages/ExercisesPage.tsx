@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
-import { Button, Flex, Heading } from "@chakra-ui/react";
+import { Button, Flex, HStack, Heading } from "@chakra-ui/react";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useExercises } from "../features/exercises/hooks";
 import { ExerciseFilters } from "../features/exercises/ExerciseFilters";
 import { ExerciseTable } from "../features/exercises/ExerciseTable";
 import { ExerciseFormModal } from "../features/exercises/ExerciseFormModal";
+import { ImportExercisesModal } from "../features/exercise-import/ImportExercisesModal";
 import { LoadingState } from "../components/ui/LoadingState";
 import type { Exercise } from "../types/domain";
 
@@ -14,6 +15,7 @@ export default function ExercisesPage() {
   const [category, setCategory] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(
     null,
   );
@@ -58,9 +60,22 @@ export default function ExercisesPage() {
         mb={6}
       >
         <Heading size="md">Exercises</Heading>
-        <Button colorPalette="brand" onClick={openCreateForm}>
-          New exercise
-        </Button>
+        <HStack flexWrap="wrap">
+          <Button
+            variant="outline"
+            flex={{ base: 1, md: "initial" }}
+            onClick={() => setImportOpen(true)}
+          >
+            Import from text
+          </Button>
+          <Button
+            colorPalette="brand"
+            flex={{ base: 1, md: "initial" }}
+            onClick={openCreateForm}
+          >
+            New exercise
+          </Button>
+        </HStack>
       </Flex>
 
       <ExerciseFilters
@@ -83,6 +98,12 @@ export default function ExercisesPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         exercise={editingExercise}
+      />
+
+      <ImportExercisesModal
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImported={() => {}}
       />
     </>
   );

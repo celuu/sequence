@@ -71,7 +71,9 @@ export function ImportReviewStep({
 
       {readyDrafts.length > 0 && (
         <Stack gap={2}>
-          <Text fontWeight="semibold">Ready to import ({readyDrafts.length})</Text>
+          <Text fontWeight="semibold">
+            Ready to import ({readyDrafts.length})
+          </Text>
 
           <Stack gap={3} display={{ base: "flex", md: "none" }}>
             {readyDrafts.map((draft) => (

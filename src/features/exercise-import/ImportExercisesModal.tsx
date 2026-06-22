@@ -10,55 +10,50 @@ import {
   Textarea,
 } from "@chakra-ui/react";
 import { useAuth } from "../../auth/useAuth";
-import { useExercises } from "../exercises/hooks";
-import { toDraftBlocks } from "./deriveDraftBlocks";
-import { useCommitImport, useParseWorkoutText } from "./hooks";
 import { LoadingStatus } from "../../components/ui/LoadingStatus";
-import { ImportReviewStep } from "./ImportReviewStep";
-import type { DraftBlock } from "./types";
+import { useExercises } from "../exercises/hooks";
+import { toDraftExercises } from "./deriveDraftExercises";
+import { useCommitExerciseImport, useParseExerciseList } from "./hooks";
+import { ImportExercisesReviewStep } from "./ImportExercisesReviewStep";
+import type { DraftExercise } from "./types";
 
-const EXAMPLE_PLACEHOLDER = `Lagree 6/13
-GR kneeling crunch 1.5
-GR saw 1.5
-R super crunch 2
-
-Side plank - pulses 1
-Mermaid 1.5`;
+const EXAMPLE_PLACEHOLDER = `Center Core
+All 1 yellow spring unless otherwise noted
+Plank & Forearm Plank and variations (also reverse, giant reverse, giant)
+Wheelbarrow (also reverse, giant reverse, giant)
+Catfish/Giant Reverse catfish`;
 
 const PARSE_MESSAGES = [
-  "Reading your class notes…",
-  "Identifying exercises…",
-  "Working out durations and equipment…",
-  "Matching against your exercise library…",
+  "Reading your exercise list…",
+  "Expanding variations…",
+  "Matching against your library…",
   "Almost there…",
 ] as const;
 
 const COMMIT_MESSAGES = [
-  "Creating your workout…",
-  "Adding new exercises to your library…",
-  "Building your block list…",
+  "Adding exercises to your library…",
   "Almost done…",
 ] as const;
 
 function estimateParseDurationMs(textLength: number): number {
-  return Math.min(Math.max(4000 + textLength * 8, 4000), 15000);
+  return Math.min(Math.max(4000 + textLength * 8, 4000), 20000);
 }
 
-function estimateCommitDurationMs(blockCount: number): number {
-  return Math.min(Math.max(1500 + blockCount * 350, 1500), 12000);
+function estimateCommitDurationMs(count: number): number {
+  return Math.min(Math.max(1000 + count * 250, 1000), 15000);
 }
 
-interface ImportWorkoutModalProps {
+interface ImportExercisesModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onImported: (workoutId: string) => void;
+  onImported: (count: number) => void;
 }
 
-export function ImportWorkoutModal({
+export function ImportExercisesModal({
   open,
   onOpenChange,
   onImported,
-}: ImportWorkoutModalProps) {
+}: ImportExercisesModalProps) {
   return (
     <Dialog.Root
       open={open}
@@ -70,7 +65,7 @@ export function ImportWorkoutModal({
         <Dialog.Positioner>
           <Dialog.Content>
             {open && (
-              <ImportWorkoutModalBody
+              <ImportExercisesModalBody
                 onDone={() => onOpenChange(false)}
                 onImported={onImported}
               />
@@ -82,62 +77,54 @@ export function ImportWorkoutModal({
   );
 }
 
-interface ImportWorkoutModalBodyProps {
+interface ImportExercisesModalBodyProps {
   onDone: () => void;
-  onImported: (workoutId: string) => void;
+  onImported: (count: number) => void;
 }
 
-function ImportWorkoutModalBody({
+function ImportExercisesModalBody({
   onDone,
   onImported,
-}: ImportWorkoutModalBodyProps) {
+}: ImportExercisesModalBodyProps) {
   const { user } = useAuth();
   const { data: exercises = [] } = useExercises();
-  const parseWorkoutText = useParseWorkoutText();
-  const commitImport = useCommitImport();
+  const parseExerciseList = useParseExerciseList();
+  const commitExerciseImport = useCommitExerciseImport();
 
   const [step, setStep] = useState<"paste" | "review">("paste");
   const [text, setText] = useState("");
-  const [workoutName, setWorkoutName] = useState("");
-  const [draftBlocks, setDraftBlocks] = useState<DraftBlock[]>([]);
+  const [draftExercises, setDraftExercises] = useState<DraftExercise[]>([]);
 
   const handleParse = async () => {
-    const result = await parseWorkoutText.mutateAsync({
+    const result = await parseExerciseList.mutateAsync({
       text,
-      existingExercises: exercises.map((e) => ({
-        name: e.name,
-        category: e.category,
-      })),
+      existingExercises: exercises.map((e) => ({ name: e.name })),
     });
-    setWorkoutName(result.workoutName?.trim() || "Imported workout");
-    setDraftBlocks(toDraftBlocks(result.blocks, exercises));
+    setDraftExercises(toDraftExercises(result.exercises, exercises));
     setStep("review");
   };
 
   const handleCommit = async () => {
-    const workoutId = await commitImport.mutateAsync({
+    const count = await commitExerciseImport.mutateAsync({
       userId: user!.id,
-      workoutName: workoutName.trim() || "Imported workout",
-      draftBlocks,
+      draftExercises,
     });
     onDone();
-    onImported(workoutId);
+    onImported(count);
   };
 
-  const committableCount = draftBlocks.filter(
-    (d) => d.status !== "skipped" && d.durationSeconds != null && d.durationSeconds > 0,
-  ).length;
+  const createCount = draftExercises.filter((d) => d.status === "create").length;
 
   return (
     <>
       <Dialog.Header px={{ base: 4, md: 6 }}>
         <Dialog.Title>
-          {step === "paste" ? "Import from text" : "Review import"}
+          {step === "paste" ? "Import exercises from text" : "Review import"}
         </Dialog.Title>
       </Dialog.Header>
       <Dialog.Body px={{ base: 4, md: 6 }} maxH="65vh" overflowY="auto">
         {step === "paste" ? (
-          parseWorkoutText.isPending ? (
+          parseExerciseList.isPending ? (
             <LoadingStatus
               messages={PARSE_MESSAGES}
               estimatedDurationMs={estimateParseDurationMs(text.length)}
@@ -146,8 +133,9 @@ function ImportWorkoutModalBody({
           ) : (
             <Stack gap={4}>
               <Text fontSize="sm" color="gray.500">
-                Paste your class notes below. Each line should name an
-                exercise — numbers are read as minutes.
+                Paste your exercise catalog below — section labels, equipment
+                defaults, and "(also reverse, giant reverse, giant)" style
+                variation lists are all understood.
               </Text>
               <Textarea
                 value={text}
@@ -157,40 +145,37 @@ function ImportWorkoutModalBody({
                 fontFamily="mono"
                 autoFocus
               />
-              {parseWorkoutText.isError && (
+              {parseExerciseList.isError && (
                 <Alert.Root status="error">
                   <Alert.Indicator />
                   <Alert.Title>
-                    {parseWorkoutText.error instanceof Error
-                      ? parseWorkoutText.error.message
+                    {parseExerciseList.error instanceof Error
+                      ? parseExerciseList.error.message
                       : "Couldn't parse that text."}
                   </Alert.Title>
                 </Alert.Root>
               )}
             </Stack>
           )
-        ) : commitImport.isPending ? (
+        ) : commitExerciseImport.isPending ? (
           <LoadingStatus
             messages={COMMIT_MESSAGES}
-            estimatedDurationMs={estimateCommitDurationMs(committableCount)}
-            emoji="🏗️"
+            estimatedDurationMs={estimateCommitDurationMs(createCount)}
+            emoji="📚"
           />
         ) : (
           <Stack gap={4}>
-            <ImportReviewStep
-              workoutName={workoutName}
-              onWorkoutNameChange={setWorkoutName}
-              draftBlocks={draftBlocks}
-              onChange={setDraftBlocks}
-              existingExercises={exercises}
+            <ImportExercisesReviewStep
+              draftExercises={draftExercises}
+              onChange={setDraftExercises}
             />
-            {commitImport.isError && (
+            {commitExerciseImport.isError && (
               <Alert.Root status="error">
                 <Alert.Indicator />
                 <Alert.Title>
-                  {commitImport.error instanceof Error
-                    ? commitImport.error.message
-                    : "Couldn't create the workout."}
+                  {commitExerciseImport.error instanceof Error
+                    ? commitExerciseImport.error.message
+                    : "Couldn't create the exercises."}
                 </Alert.Title>
               </Alert.Root>
             )}
@@ -202,7 +187,7 @@ function ImportWorkoutModalBody({
           <Button
             variant="outline"
             onClick={() => setStep("paste")}
-            disabled={commitImport.isPending}
+            disabled={commitExerciseImport.isPending}
           >
             Back
           </Button>
@@ -210,7 +195,7 @@ function ImportWorkoutModalBody({
         <Dialog.ActionTrigger asChild>
           <Button
             variant="outline"
-            disabled={parseWorkoutText.isPending || commitImport.isPending}
+            disabled={parseExerciseList.isPending || commitExerciseImport.isPending}
           >
             Cancel
           </Button>
@@ -219,7 +204,7 @@ function ImportWorkoutModalBody({
           <Button
             colorPalette="brand"
             onClick={handleParse}
-            loading={parseWorkoutText.isPending}
+            loading={parseExerciseList.isPending}
             disabled={!text.trim()}
           >
             Parse
@@ -228,10 +213,10 @@ function ImportWorkoutModalBody({
           <Button
             colorPalette="brand"
             onClick={handleCommit}
-            loading={commitImport.isPending}
-            disabled={committableCount === 0 || !workoutName.trim()}
+            loading={commitExerciseImport.isPending}
+            disabled={createCount === 0}
           >
-            Create workout ({committableCount})
+            Create {createCount} exercises
           </Button>
         )}
       </Dialog.Footer>
